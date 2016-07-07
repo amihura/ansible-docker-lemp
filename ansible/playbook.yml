@@ -1,0 +1,96 @@
+---
+- name: Vagrant provisioning using Ansible Playbook for centos 6.x
+  hosts: all
+  envs:
+    ENV: "ENV=php-fpm"
+  tasks:
+    - name: install packages
+      yum: name={{ item }} state=latest update_cache=yes
+      with_items:
+        - git
+        - wget
+        - curl
+
+    - name: install docker
+      shell: curl -sSL https://get.docker.com/ | sh
+      args:
+        creates: /usr/bin/docker
+
+    # required to install docker-py
+    - name: install pip
+      shell: curl https://bootstrap.pypa.io/get-pip.py | python
+      args:
+        creates: /usr/local/bin/pip
+
+    # required by ansible docker module
+    - name: install docker-py
+      pip: name=docker-py version=1.1.0 # v1.1.0 is workaround from https://github.com/ansible/ansible/issues/10879#issuecomment-97738264
+
+    - name: Deploy site files from Github repository
+      git: repo=https://github.com/amihura/ansible-docker-lemp.git dest=/opt force=yes
+      
+    - name: check or build mysql image
+      docker_image:
+        path: /opt/ansible-docker-lemp/docker/mysql
+        name: mysql-img
+        state: build
+
+    - name: mysql container
+      docker:
+        image: mysql-img
+        name: mysql
+        state: restarted
+
+    - name: check or build php-fpm image
+      docker_image:
+        path: /opt/ansible-docker-lemp/docker/php-fpm
+        name: php-fpm-img
+        state: build
+
+    - name: php-fpm container
+      docker:
+        image: php-fpm-img
+        name: php-fpm
+        state: restarted
+        links:
+        - "mysql:mysql"
+        volumes_from:
+        - mysql
+        env: "{{ ENV }}"
+
+    - name: check or build nginx image
+      docker_image:
+        path: /opt/ansible-docker-lemp/docker/nginx
+        name: nginx-img
+        state: build
+
+    - name: nginx container
+      docker:
+        image: nginx-img
+        name: nginx
+        state: restarted
+        volumes_from:
+          - "php-fpm"
+        links:
+          - "php-fpm:php-fpm"
+        ports:
+          - "80:80"
+          - "443:443"
+        env: "{{ ENV }}"
+
+    - name: check or build proftpd image
+      docker_image:
+        path: /opt/ansible-docker-lemp/docker/proftpd
+        name: proftpd-img
+        state: build
+
+    - name: proftpd container
+      docker:
+        image: proftpd-img
+        name: proftpd
+        state: restarted
+        volumes_from:
+          - "php-fpm"
+        ports:
+          - "20"
+          - "21"
