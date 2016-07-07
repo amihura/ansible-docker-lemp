@@ -1,5 +1,5 @@
 ---
-- name: Vagrant provisioning using Ansible Playbook for centos 6.x
+- name: Vagrant provisioning using Ansible Playbook for centos 7.x
   hosts: all
   vars:
     ENV: "ENV=php-fpm"
@@ -33,7 +33,7 @@
     - name: Deploy site files from Github repository
       git: repo=https://github.com/amihura/ansible-docker-lemp.git dest=/opt/ansible-docker-lemp update=yes force=yes
 
-    - name: Chnaged localhost in nginx conf
+    - name: Changing localhost in nginx conf
       command: sed -i 's/localhost/{{ server_hostname }}/g' /opt/ansible-docker-lemp/docker/nginx/php-fpm.conf
 
     - name: check or build mysql image
