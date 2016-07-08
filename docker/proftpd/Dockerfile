@@ -15,6 +15,7 @@ RUN useradd -u 505 -g 505 wp-user -d /srv/wordpress/wp-content/uploads
 RUN echo "secret" | passwd "wp-user" --stdin
 RUN chown wordpress:wp-user -R /srv/wordpress/wp-content/uploads
 RUN chmod 775 -R /srv/wordpress/wp-content/uploads
+ADD ./proftpd.conf /etc/proftpd.conf
 
 EXPOSE 20
 EXPOSE 21

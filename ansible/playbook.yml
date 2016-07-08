@@ -36,29 +36,34 @@
     - name: Changing localhost in nginx conf
       command: sed -i 's/localhost/{{ server_hostname }}/g' /opt/ansible-docker-lemp/docker/nginx/php-fpm.conf
 
+    - name: add masqrd to proftpd conf
+      lineinfile: dest=/opt/ansible-docker-lemp/docker/proftpd/proftpd.conf
+                  regexp="MasqueradeAddress {{ server_hostname }}"
+                  line="MasqueradeAddress {{ server_hostname }}"
+
     - name: check or build mysql image
       docker_image:
         path: /opt/ansible-docker-lemp/docker/mysql
         name: mysql-img
-        state: build
+        state: present
 
     - name: mysql container
       docker:
         image: mysql-img
         name: mysql
-        state: restarted
+        state: reloaded
 
     - name: check or build php-fpm image
       docker_image:
         path: /opt/ansible-docker-lemp/docker/php-fpm
         name: php-fpm-img
-        state: build
+        state: present
 
     - name: php-fpm container
       docker:
         image: php-fpm-img
         name: php-fpm
-        state: restarted
+        state: reloaded
         links:
         - "mysql:mysql"
         volumes_from:
@@ -69,13 +74,13 @@
       docker_image:
         path: /opt/ansible-docker-lemp/docker/nginx
         name: nginx-img
-        state: build
+        state: present
 
     - name: nginx container
       docker:
         image: nginx-img
         name: nginx
-        state: restarted
+        state: reloaded
         volumes_from:
           - "php-fpm"
         links:
@@ -89,15 +94,13 @@
       docker_image:
         path: /opt/ansible-docker-lemp/docker/proftpd
         name: proftpd-img
-        state: build
+        state: present
 
     - name: proftpd container
       docker:
         image: proftpd-img
         name: proftpd
-        state: restarted
+        state: reloaded
+        net: host
         volumes_from:
           - "php-fpm"
-        ports:
-          - "20"
-          - "21"
