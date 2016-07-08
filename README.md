@@ -31,4 +31,4 @@ You can deploy docker manually without ansible:
       You can use Apache instead of PHP-FPM just set it to: ENV=apache
    3. nginx: docker run -p 443:443 -p 80:80 -e ENV=php-fpm --link php-fpm --volumes-from php-fpm --name nginx nginx-img
       Here you also need to set proper ENV, it should match to ENV from poing 2.
-   4. proftpd: docker run -p 20:20 -p 21:21 --volumes-from php-fpm --name proftpd proftpd-img
+   4. proftpd: docker run --net=host --volumes-from php-fpm --name proftpd proftpd-img
